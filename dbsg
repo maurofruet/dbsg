@@ -1,0 +1,236 @@
+#!/bin/bash
+
+program="dbsg"
+wallpapers="$HOME/.$program/wallpapers.txt"
+minutes=30
+log="/var/log/$program.log"
+conf="$HOME/.$program/$program.conf"
+if [ -f $conf ]; then
+    . $conf
+else
+    declare -a folders
+fi
+xpid=$(pidof gnome-shell)
+xdisp=$(awk 'BEGIN{RS="\\000";FS="="}($1 == "DISPLAY"){print $2}' \
+    < /proc/$xpid/environ)
+export DISPLAY=$xdisp
+cmd='echo [ "$XAUTHORITY" ] && cp -f "$XAUTHORITY" ~/.Xauthority'
+dest="$HOME/.xprofile"
+if [ ! -f "$HOME/.Xauthority" ]; then
+    if [ ! -f "$HOME/.xprofile" ]; then
+        $cmd > $dest
+    else
+        $cmd >> $dest
+    fi
+fi
+
+print_folders() {
+    if [ ${#folders[@]} -eq 0 ]; then
+        echo -e "\nThe program is not currently monitoring any folder.\n"
+    else
+        echo -e "\nThe program is currently monitoring the following folders:\n"
+    fi
+	for folder in "${folders[@]}"; do
+	    echo $folder
+	done
+}
+
+add_folders() {
+    if [ -f $conf ]; then
+        mv $conf{,.backup}
+        print_folders
+    fi
+    echo -e "\nEnter the full path of the image folders that you"
+    echo want to set as your desktop background.
+    echo Please leave an empty line by pressing "<Enter>" when you
+    echo have finished.
+    
+    declare -i i=${#folders[@]}
+	while true; do
+	    echo -e -n "\nFolder #$((i+1)): "
+	    read folders[$i]
+	    if [ -z ${folders[0]} ]; then
+	        echo -e "\nPlease enter at least one folder."
+	        i=i-1
+	    elif [ ! -d ${folders[$i]} ]; then
+	        echo This folder does not exist. Please enter a valid one.
+	        i=i-1
+	    elif [ -z ${folders[$i]} ]; then
+	        break
+	    fi
+	    i=i+1
+	done
+
+    print_folders
+		echo "folders=(${folders[@]})" > $conf
+    update_wallpapers
+    change_wallpaper
+}
+
+remove_folders() {
+    if [ -f $conf ]; then
+        mv $conf{,.backup}
+        print_folders
+    fi
+    echo -e "\nEnter the full path of the image folders that you"
+    echo "do not want to monitor anymore."
+    echo Please leave an empty line by pressing "<Enter>" when you
+    echo have finished.
+    
+	while true; do
+	    echo -e -n "\nFolder: "
+	    read removed_folder
+	    if [ ! -d $removed_folder ]; then
+	        echo This folder does not exist. Please enter a valid one.
+        elif [ -z $removed_folder ]; then
+	        break
+        else
+            declare -i j=0      
+            monitored=false
+            while [ $j -lt "${#folders[@]}" ]; do
+                if [ "${folders[$j]}" = "$removed_folder" ]; then
+                    monitored=true
+                    break
+                fi
+                j=j+1
+            done
+            if [ ! $monitored ]; then
+                echo "This folder is not currently monitored."
+            else
+                unset folders[$j]
+            fi
+        fi
+	done
+
+    print_folders
+	echo "folders=(${folders[@]})" > $conf
+    update_wallpapers
+    change_wallpaper
+}
+
+check_folders() {
+    # Check if all the specified folders do exist
+    declare -i i=0
+    while [ "${folders[$i]}" != "" ]; do
+        if [ ! -d ${folders[$i]} ]; then
+            echo '`date "+%Y-%M-%d, %H:%M"` - Folder "${folders[$i]}" 
+                does not exist! Check $CONF' >> $log
+            exit 2
+        fi
+        i=i+1
+    done
+}
+
+check_wallpaper() {
+    # Check if the wallpaper has been deleted
+    if [ ! -f $1 ]; then
+        echo File $1 has been deleted! >> $log
+        update_wallpapers
+    fi
+}
+
+update_wallpapers() {
+    # Update wallpaper list
+    if [ ${#folders[@]} -eq 0 ]; then
+        add_folders
+    elif [ -f $conf ]; then
+        . $conf
+    fi
+    if [ -f $wallpapers ]; then
+        rm $wallpapers
+    fi
+    echo "`date "+%Y-%M-%d, %H:%M"` - Adding wallpapers to the 
+            list..." >> $log
+    declare -i i=0
+    while [ "${folders[$i]}" != "" ]; do
+        for file in ${folders[$i]}/*.jpg; do
+            echo $file >> $wallpapers
+        done
+        i=i+1
+    done
+	echo `date "+%Y-%M-%d, %H:%M"` - Wallpaper list updated! >> $log
+}
+
+get_current_wallpaper() {
+    # Return the current desktop background
+    echo `/usr/bin/gsettings get org.gnome.desktop.background picture-uri | 
+            sed "s/'//g" | sed 's/file:\/\///'`
+}
+
+change_wallpaper() {
+    # Change the current desktop background
+    check_folders
+    update_wallpapers
+    lines=`cat $wallpapers | wc -l`
+    line=$(( $RANDOM % $lines + 1 ))
+    image=`head -$line $wallpapers | tail -1`
+    check_wallpaper $image
+    new="'file://$image'"
+    gsettings set org.gnome.desktop.background picture-uri $new
+    current=`get_current_wallpaper`
+    if [ $image = $current ]; then
+    	echo "`date "+%Y-%M-%d, %H:%M"` - Wallpaper successfully 
+                changed!" >> $log
+    	echo `date "+%Y-%M-%d, %H:%M"` - New wallpaper: $current >> $log
+    else
+        #This should never happen
+    	echo "`date "+%Y-%M-%d, %H:%M"` - Wallpaper not changed! Try updating 
+                the wallpaper list" >> $log
+        exit 3
+    fi
+}
+
+delete_current_wallpaper() {
+    current=`get_current_wallpaper`
+    if [ ! -f $current ]; then
+        echo "`date "+%Y-%M-%d, %H:%M"` - Wallpaper not removed: file $current
+            does not exist!" >> $log
+        exit 4
+    else
+        rm $current
+        echo `date "+%Y-%M-%d, %H:%M"` - Wallpaper removed: $current >> $log
+    fi
+    change_wallpaper
+}
+
+number_of_wallpapers() {
+    n=`"more $wallpapers | wc -l"`
+    echo -e "\n$program is currently monitoring $n wallpapers.\n"
+}
+
+update_slideshow() {
+    # Schedule the wallpaper slideshow using crontab by first backing up
+    # the current crontab file
+    . $conf
+    tmp="$HOME/.$program/crontab.tmp"
+    crontab -l | grep -Ev $program > $tmp
+    echo "*/$minutes * * * * $program -c" >> $tmp
+    crontab $tmp
+    change_wallpaper
+}
+
+initialize_slideshow() {
+    # Initialize the list of folders where the program has to search 
+    # for images to be used as desktop background.
+    if [ ! -d $HOME/.$program ]; then
+        mkdir -p $HOME/.$program
+    fi
+    if [ ! -f $conf ]; then
+        add_folders
+    fi
+    . $conf
+    update_slideshow
+}
+
+case "$1" in
+    -a) add_folders;;
+    -b) get_current_wallpaper;;
+    -c) change_wallpaper;;
+    -d) delete_current_wallpaper;;
+    -i) initialize_slideshow;;
+    -n) number_of_wallpapers;;
+    -p) print_folders;;
+    -r) remove_folders;;
+     *) echo "usage: $program [option]. See the man page for more details."
+esac
+exit 0

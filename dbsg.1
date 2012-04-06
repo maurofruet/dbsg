@@ -1,0 +1,108 @@
+.TH DBSG 1 "Apr 7, 2012" "dbsg 0.9"
+
+.SH NAME
+dbsg \- create a desktop background slideshow in GNOME 3
+
+.SH SYNOPSIS
+.B dbsg
+.I OPTION
+
+.SH DESCRIPTION
+.B dbsg
+periodically changes the desktop background in systems running
+GNOME 3 by scheduling a job in the crontab file of the user, who can
+thus customize the interval between two subsequent desktop backgrounds
+by modifying his crontab file. The next desktop background is
+randomly selected from the list of image files that are stored in the
+folders specified by the user.
+
+.SH OPTIONS
+.B dbsg
+must take as argument one of the following parameters:
+
+.TP
+.B -a
+add folders to be monitored by the program
+
+.TP
+.B -b
+show the full path of the current desktop background
+
+.TP
+.B -c
+change the current desktop background by randomly selecting one in the
+image folders monitored by the program.
+
+.TP
+.B -d
+delete the current desktop background from the folder in which it is
+stored and set another wallpaper as the new desktop background.
+
+.TP
+.B -i
+initialize the list of folders where the program has to search for
+images to be used as desktop background and schedule the wallpaper
+slideshow by modifying the crontab file of the user. The default
+interval is set to 30 minutes.
+
+.TP
+.B -n
+show the number of wallpapers monitored by the program
+
+.TP
+.B -p
+print the list of folders that are currently monitored by the program
+
+.TP
+.B -r
+stop monitoring selected folders
+
+.SH USAGE
+In order to periodically change the desktop background, the user has
+to specify the folders that the program has to monitor to search for
+image files, so that
+.B dbsg
+can schedule the wallpaper slideshow. This can be achieved by issuing
+the following command:
+
+.PP
+.B dbsg -i
+
+.PP
+which asks the user to add at least one image folder. Then,
+.B dbsg
+schedules the wallpapers slideshow and changes the current background.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success
+
+.TP
+.B 1
+Syntax or usage error
+
+.TP
+.B 2
+One of the specified folders in which wallpapers have to be searched
+for does not exist
+
+.TP
+.B 3
+The current desktop background has not been changed
+
+.TP
+.B 4
+The image file chosen to be deleted does not exist
+
+.SH REPORTING BUGS
+Report bugs at
+
+.SH AUTHOR
+Written by Mauro Fruet
+
+.SH COPYRIGHT
+This software is distributed according to the GPLv+3 License: GNU GPL
+version 3 or later: http://gnu.org/licenses/gpl.html. This is free 
+software: you are free to change and redistribute it.  There is
+NO WARRANTY, to the extent permitted by law.
