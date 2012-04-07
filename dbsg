@@ -42,7 +42,6 @@ check_permission() {
                 echo $cmd >> $dest
             fi
         fi
-        echo Please reboot to let cron schedule the wallpaper slideshow
     fi
 }
 
@@ -138,9 +137,7 @@ remove_folders() {
 	while true; do
 	    echo -e -n "\nFolder: "
 	    read removed_folder
-	    if [ ! -d $removed_folder ]; then
-	        echo This folder does not exist. Please enter a valid one.
-        elif [ -z $removed_folder ]; then
+        if [ -z $removed_folder ]; then
 	        break
         else
             declare -i j=0      
