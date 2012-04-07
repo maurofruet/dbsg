@@ -12,16 +12,22 @@ else
 fi
 
 check_permission() {
-    # Check if cron has the permission to change the desktop background
+    # Check if cron has thu permission to change the desktop background
+
+    # Check if the system is using GNOME 3 as desktop environment
     xpid=$(pidof gnome-shell)
     if [ -z $xpid ]; then
         echo Sorry, this program is designed to work only in GNOME 3.
         exit 5
     fi
+
+    # Tell cron what is the display currently used
     xdisp=$(awk 'BEGIN{RS="\\000";FS="="}($1 == "DISPLAY"){print $2}' \
         < /proc/$xpid/environ)
     export DISPLAY=$xdisp
 
+    # Check if the file .Xauthority is present in the home folder of
+    # the user
     if [ ! -f "$HOME/.Xauthority" ]; then
         cmd='[ "$XAUTHORITY" ] && cp -f "$XAUTHORITY" ~/.Xauthority'
         dest="$HOME/.xprofile"
@@ -39,14 +45,16 @@ check_permission() {
 
 check_configuration_folder() {
     # Check if the configuration folder does exist
+
     if [ ! -d $HOME/.$program ]; then
         mkdir -p $HOME/.$program
     fi
 }
 
 update_slideshow() {
-    # Schedule the wallpaper slideshow using crontab by first backing up
+    # Use crontab to schedule the wallpaper slideshow by first backing up
     # the current crontab file
+
     . $conf
     tmp="$HOME/.$program/crontab.tmp"
     crontab -l | grep -Ev $program > $tmp
@@ -56,7 +64,8 @@ update_slideshow() {
 
 check_schedule() {
     # Check if the wallpaper slideshow has been scheduled
-	scheduled=`crontab -l | grep "dbsg -c" | wc -l`
+
+    scheduled=`crontab -l | grep "dbsg -c" | wc -l`
 	if [ $scheduled -eq 0 ]; then
     	update_slideshow
 	fi
@@ -64,6 +73,7 @@ check_schedule() {
 
 print_folders() {
     # Print the list of currently monitored folders
+
     if [ ${#folders[@]} -eq 0 ]; then
         echo -e "\n$program is not currently monitoring any folder.\n"
     else
@@ -76,6 +86,7 @@ print_folders() {
 
 add_folders() {
     # Add folders to be monitored
+
     check_configuration_folder
     check_permission
     check_schedule
@@ -112,6 +123,7 @@ add_folders() {
 
 remove_folders() {
     # Remove folders to be monitored
+
     if [ -f $conf ]; then
         print_folders
     fi
@@ -153,6 +165,7 @@ remove_folders() {
 
 check_folders() {
     # Check if all monitored folders do exist
+
     declare -i i=0
     while [ "${folders[$i]}" != "" ]; do
         if [ ! -d ${folders[$i]} ]; then
@@ -166,6 +179,7 @@ check_folders() {
 
 check_wallpaper() {
     # Check if the wallpaper has been deleted
+
     if [ ! -f $1 ]; then
         echo File $1 has been deleted! >> $log
         update_wallpapers
@@ -174,6 +188,7 @@ check_wallpaper() {
 
 update_wallpapers() {
     # Update wallpaper list
+
     if [ ${#folders[@]} -eq 0 ]; then
         add_folders
     elif [ -f $conf ]; then
@@ -186,7 +201,7 @@ update_wallpapers() {
             list..." >> $log
     declare -i i=0
     while [ "${folders[$i]}" != "" ]; do
-        for file in ${folders[$i]}/*.jpg; do
+        for file in ${folders[$i]}/*.{jpg,JPG,bmp,BMP,png,PNG,tif,TIF,gif,GIF}; do
             echo $file >> $wallpapers
         done
         i=i+1
@@ -196,12 +211,14 @@ update_wallpapers() {
 
 get_current_wallpaper() {
     # Return the current desktop background
+
     echo `/usr/bin/gsettings get org.gnome.desktop.background picture-uri | 
             sed "s/'//g" | sed 's/file:\/\///'`
 }
 
 change_wallpaper() {
     # Change the current desktop background
+
     check_permission
     check_folders
     update_wallpapers
@@ -226,6 +243,7 @@ change_wallpaper() {
 
 delete_current_wallpaper() {
     # Delete the image of the current desktop background
+
     current=`get_current_wallpaper`
     if [ ! -f $current ]; then
         echo "Error: the file does not exist."
@@ -240,6 +258,7 @@ delete_current_wallpaper() {
 
 number_of_wallpapers() {
     # Show the number of currently monitored wallpapers
+
     n=`more $wallpapers | wc -l`
     echo -e "\n$program is currently monitoring $n wallpapers.\n"
 }

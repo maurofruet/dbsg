@@ -22,8 +22,8 @@ as root user from the current directory. This script creates the
 following files in your filesystem:
 
 /usr/bin/dbsg: the actual program
-/usr/share/man/man1/dbsg.1.gz : the man page of the program,
-which can be seen by executing 'man dbsg'.
+/usr/share/man/man1/dbsg.1.gz: the man page of the program,
+which can be read by executing 'man dbsg'.
 
 ##################################################################
 2. Configuration
@@ -36,9 +36,11 @@ This can be achieved by issuing the following command:
 
 dbsg -a
 
-which asks the user to add at least one image folder. Then, the
-program schedules the wallpapers slideshow and changes the
-current background.
+which asks the user to add at least one image folder.
+dbsg currently supports the following extensions: jpg, bmp, png,
+tif and gif.
+Then, the program schedules the wallpaper slideshow and changes
+the current background.
 
 ##################################################################
 3. Features and usage
@@ -52,7 +54,6 @@ in the image folders monitored by the program
 - print the list of folders that are currently monitored
 - show the number of wallpapers monitored by the program
 - show the full path of the current desktop background
-the current desktop background
 - delete the current desktop background from the folder in which
 it is stored
 
