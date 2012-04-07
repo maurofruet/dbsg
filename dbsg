@@ -1,4 +1,7 @@
 #!/bin/bash
+# dbsg v0.9
+# Updated Apr 7, 2012
+# Author: Mauro Fruet
 
 program="dbsg"
 wallpapers="$HOME/.$program/wallpapers.txt"
@@ -12,7 +15,7 @@ else
 fi
 
 check_permission() {
-    # Check if cron has thu permission to change the desktop background
+    # Check if cron has the permission to change the desktop background
 
     # Check if the system is using GNOME 3 as desktop environment
     xpid=$(pidof gnome-shell)
