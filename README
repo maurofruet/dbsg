@@ -34,7 +34,7 @@ to specify the folders that the program has to monitor to search
 for image files, so that it can schedule the wallpaper slideshow.
 This can be achieved by issuing the following command:
 
-dbsg -i
+dbsg -a
 
 which asks the user to add at least one image folder. Then, the
 program schedules the wallpapers slideshow and changes the
@@ -48,10 +48,12 @@ dbsg lets you:
 - change the current desktop background by randomly selecting one
 in the image folders monitored by the program
 - add image folders to be monitored
+- stop monitoring specific folders
 - print the list of folders that are currently monitored
+- show the number of wallpapers monitored by the program
 - show the full path of the current desktop background
 the current desktop background
-- remove the current desktop background from the folder in which
+- delete the current desktop background from the folder in which
 it is stored
 
-Read the man page of the program to understand how to use it.
+Please read the man page for more details.

@@ -10,25 +10,60 @@ if [ -f $conf ]; then
 else
     declare -a folders
 fi
-xpid=$(pidof gnome-shell)
-xdisp=$(awk 'BEGIN{RS="\\000";FS="="}($1 == "DISPLAY"){print $2}' \
-    < /proc/$xpid/environ)
-export DISPLAY=$xdisp
-cmd='echo [ "$XAUTHORITY" ] && cp -f "$XAUTHORITY" ~/.Xauthority'
-dest="$HOME/.xprofile"
-if [ ! -f "$HOME/.Xauthority" ]; then
-    if [ ! -f "$HOME/.xprofile" ]; then
-        $cmd > $dest
-    else
-        $cmd >> $dest
+
+check_permission() {
+    # Check if cron has the permission to change the desktop background
+    xpid=$(pidof gnome-shell)
+    xdisp=$(awk 'BEGIN{RS="\\000";FS="="}($1 == "DISPLAY"){print $2}' \
+        < /proc/$xpid/environ)
+    export DISPLAY=$xdisp
+
+    if [ ! -f "$HOME/.Xauthority" ]; then
+        cmd='[ "$XAUTHORITY" ] && cp -f "$XAUTHORITY" ~/.Xauthority'
+        dest="$HOME/.xprofile"
+        if [ ! -f "$HOME/.xprofile" ]; then
+            echo $cmd > $dest
+        else
+			permitted=`more $dest | grep XAUTHORITY | wc -l`
+	        if [ $permitted -eq 0 ]; then
+                echo $cmd >> $dest
+            fi
+        fi
+        echo Please reboot to let cron schedule the wallpaper slideshow
     fi
-fi
+}
+
+check_configuration_folder() {
+    # Check if the configuration folder does exist
+    if [ ! -d $HOME/.$program ]; then
+        mkdir -p $HOME/.$program
+    fi
+}
+
+update_slideshow() {
+    # Schedule the wallpaper slideshow using crontab by first backing up
+    # the current crontab file
+    . $conf
+    tmp="$HOME/.$program/crontab.tmp"
+    crontab -l | grep -Ev $program > $tmp
+    echo "*/$minutes * * * * $program -c" >> $tmp
+    crontab $tmp
+}
+
+check_schedule() {
+    # Check if the wallpaper slideshow has been scheduled
+	scheduled=`crontab -l | grep "dbsg -c" | wc -l`
+	if [ $scheduled -eq 0 ]; then
+    	update_slideshow
+	fi
+}
 
 print_folders() {
+    # Print the list of currently monitored folders
     if [ ${#folders[@]} -eq 0 ]; then
-        echo -e "\nThe program is not currently monitoring any folder.\n"
+        echo -e "\n$program is not currently monitoring any folder.\n"
     else
-        echo -e "\nThe program is currently monitoring the following folders:\n"
+        echo -e "\n$program is currently monitoring the following folders:\n"
     fi
 	for folder in "${folders[@]}"; do
 	    echo $folder
@@ -36,8 +71,12 @@ print_folders() {
 }
 
 add_folders() {
+    # Add folders to be monitored
+    check_configuration_folder
+    check_permission
+    check_schedule
     if [ -f $conf ]; then
-        mv $conf{,.backup}
+        rm $conf
         print_folders
     fi
     echo -e "\nEnter the full path of the image folders that you"
@@ -62,14 +101,14 @@ add_folders() {
 	done
 
     print_folders
-		echo "folders=(${folders[@]})" > $conf
+	echo "folders=(${folders[@]})" > $conf
     update_wallpapers
     change_wallpaper
 }
 
 remove_folders() {
+    # Remove folders to be monitored
     if [ -f $conf ]; then
-        mv $conf{,.backup}
         print_folders
     fi
     echo -e "\nEnter the full path of the image folders that you"
@@ -109,7 +148,7 @@ remove_folders() {
 }
 
 check_folders() {
-    # Check if all the specified folders do exist
+    # Check if all monitored folders do exist
     declare -i i=0
     while [ "${folders[$i]}" != "" ]; do
         if [ ! -d ${folders[$i]} ]; then
@@ -159,6 +198,7 @@ get_current_wallpaper() {
 
 change_wallpaper() {
     # Change the current desktop background
+    check_permission
     check_folders
     update_wallpapers
     lines=`cat $wallpapers | wc -l`
@@ -181,45 +221,23 @@ change_wallpaper() {
 }
 
 delete_current_wallpaper() {
+    # Delete the image of the current desktop background
     current=`get_current_wallpaper`
     if [ ! -f $current ]; then
-        echo "`date "+%Y-%M-%d, %H:%M"` - Wallpaper not removed: file $current
-            does not exist!" >> $log
+        echo "Error: the file does not exist."
         exit 4
     else
         rm $current
+        echo File successfully removed.
         echo `date "+%Y-%M-%d, %H:%M"` - Wallpaper removed: $current >> $log
     fi
     change_wallpaper
 }
 
 number_of_wallpapers() {
-    n=`"more $wallpapers | wc -l"`
+    # Show the number of currently monitored wallpapers
+    n=`more $wallpapers | wc -l`
     echo -e "\n$program is currently monitoring $n wallpapers.\n"
-}
-
-update_slideshow() {
-    # Schedule the wallpaper slideshow using crontab by first backing up
-    # the current crontab file
-    . $conf
-    tmp="$HOME/.$program/crontab.tmp"
-    crontab -l | grep -Ev $program > $tmp
-    echo "*/$minutes * * * * $program -c" >> $tmp
-    crontab $tmp
-    change_wallpaper
-}
-
-initialize_slideshow() {
-    # Initialize the list of folders where the program has to search 
-    # for images to be used as desktop background.
-    if [ ! -d $HOME/.$program ]; then
-        mkdir -p $HOME/.$program
-    fi
-    if [ ! -f $conf ]; then
-        add_folders
-    fi
-    . $conf
-    update_slideshow
 }
 
 case "$1" in
@@ -231,6 +249,15 @@ case "$1" in
     -n) number_of_wallpapers;;
     -p) print_folders;;
     -r) remove_folders;;
-     *) echo "usage: $program [option]. See the man page for more details."
+     *) echo "usage: $program option"
+        echo -e "\nPossible options are:"
+        echo "  -a  add folders to be monitored"
+        echo "  -b  show path of current desktop background"
+        echo "  -c  change current desktop background"
+        echo "  -d  delete file of current desktop background"
+        echo "  -n  show number of monitored wallpapers"
+        echo "  -p  print list of monitored folders"
+        echo "  -r  stop monitoring specific folders"
+        echo See the man page for more details.
 esac
 exit 0
