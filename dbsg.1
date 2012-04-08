@@ -1,4 +1,4 @@
-.TH DBSG 1 "Apr 8, 2012" "dbsg 0.9"
+.TH DBSG 1 "Apr 8, 2012" "dbsg 1.0"
 
 .SH NAME
 dbsg \- create a desktop background slideshow in GNOME 3
@@ -36,10 +36,6 @@ delete the current desktop background from the folder in which it is
 stored and set another wallpaper as the new desktop background.
 
 .TP
-.B -h
-show the list of parameters accepted by the program.
-
-.TP
 .B -n
 show the number of wallpapers monitored by the program
 
@@ -54,6 +50,10 @@ stop monitoring specific folders
 .TP
 .B -s
 show the full path of the current desktop background
+
+.TP
+.B --help
+show the list of parameters accepted by the program.
 
 .SH USAGE
 In order to periodically change the desktop background, the user has
@@ -108,3 +108,6 @@ This software is distributed according to the GPLv+3 License: GNU GPL
 version 3 or later: http://gnu.org/licenses/gpl.html. This is free 
 software: you are free to change and redistribute it.  There is
 NO WARRANTY, to the extent permitted by law.
+
+.SH SEE ALSO
+crontab(1)
