@@ -348,7 +348,10 @@ delete_current_wallpaper() {
 # DESCRIPTION: Show the number of currently monitored wallpapers.
 #=============================================================================
 number_of_wallpapers() {
-    n=$(more $WALLPAPERS | wc -l)
+    n=0
+    if [ -f $WALLPAPERS ]; then
+        n=$(more $WALLPAPERS | wc -l)
+    fi
     echo -e "\n$PROGRAM is currently monitoring $n wallpapers.\n"
 }
 
