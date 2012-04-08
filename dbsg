@@ -362,13 +362,14 @@ number_of_wallpapers() {
 usage() {
     echo -e "\nusage: $PROGRAM option"
     echo -e "\nPossible options are:"
-    echo "  -a  add folders to be monitored"
-    echo "  -c  change current desktop background"
-    echo "  -d  delete file of current desktop background"
-    echo "  -n  show number of monitored wallpapers"
-    echo "  -p  print list of monitored folders"
-    echo "  -r  stop monitoring specific folders"
-    echo "  -s  show path of current desktop background"
+    echo "     -a  add folders to be monitored"
+    echo "     -c  change current desktop background"
+    echo "     -d  delete file of current desktop background"
+    echo "     -n  show number of monitored wallpapers"
+    echo "     -p  print list of monitored folders"
+    echo "     -r  stop monitoring specific folders"
+    echo "     -s  show path of current desktop background"
+    echo " --help  show usage"
     echo -e "\nSee the man page for more details.\n"
 }
 
