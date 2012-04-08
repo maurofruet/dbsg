@@ -1,4 +1,4 @@
-.TH DBSG 1 "Apr 7, 2012" "dbsg 0.9"
+.TH DBSG 1 "Apr 8, 2012" "dbsg 0.9"
 
 .SH NAME
 dbsg \- create a desktop background slideshow in GNOME 3
@@ -26,10 +26,6 @@ must take as argument one of the following parameters:
 add folders to be monitored by the program
 
 .TP
-.B -b
-show the full path of the current desktop background
-
-.TP
 .B -c
 change the current desktop background by randomly selecting one in the
 image folders monitored by the program.
@@ -38,6 +34,10 @@ image folders monitored by the program.
 .B -d
 delete the current desktop background from the folder in which it is
 stored and set another wallpaper as the new desktop background.
+
+.TP
+.B -h
+show the list of parameters accepted by the program.
 
 .TP
 .B -n
@@ -50,6 +50,10 @@ print the list of folders that are currently monitored by the program
 .TP
 .B -r
 stop monitoring specific folders
+
+.TP
+.B -s
+show the full path of the current desktop background
 
 .SH USAGE
 In order to periodically change the desktop background, the user has
