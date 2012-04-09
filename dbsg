@@ -227,7 +227,7 @@ check_folders() {
     declare -i i=0
     while [ "${folders[$i]}" != "" ]; do
         if [ ! -d "${folders[$i]}" ]; then
-            timestamp=$(date "+%Y-%M-%d, %H:%M")
+            timestamp=$(date "+%Y-%m-%d, %H:%M")
             echo "$timestamp - Folder ${folders[$i]} does not exist!" \
                 >> "$LOG"
             exit 2
@@ -242,7 +242,7 @@ check_folders() {
 #=============================================================================
 check_wallpaper() {
     if [ ! -f "$1" ]; then
-        timestamp=$(date "+%Y-%M-%d, %H:%M")
+        timestamp=$(date "+%Y-%m-%d, %H:%M")
         echo "$timestamp - File $1 has been deleted!" >> "$LOG"
         update_wallpapers
     fi
@@ -312,7 +312,7 @@ change_wallpaper() {
     current=$(get_current_wallpaper)
     if [ "$image" != "$current" ]; then
         # This should never happen
-        timestamp=$(date "+%Y-%M-%d, %H:%M")
+        timestamp=$(date "+%Y-%m-%d, %H:%M")
         echo "$timestamp - Wallpaper not changed! Some error occurred" \
                 >> "$LOG"
         exit 3
@@ -336,7 +336,7 @@ delete_current_wallpaper() {
     else
         rm "$current"
         echo "File successfully removed."
-        timestamp=$(date "+%Y-%M-%d, %H:%M")
+        timestamp=$(date "+%Y-%m-%d, %H:%M")
         echo "$timestamp - Wallpaper removed: $current" >> "$LOG"
     fi
     change_wallpaper
