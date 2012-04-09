@@ -1,6 +1,6 @@
 ##################################################################
-# dbsg - Create a desktop background slideshow in GNOME 3
-# Written by Mauro Fruet
+# dbsg - Schedule a desktop background slideshow in GNOME 3
+# Written by Mauro Fruet <maurofruet@gmail.com>
 ##################################################################
 
 dbsg periodically changes the desktop background in systems

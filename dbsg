@@ -3,14 +3,14 @@
 #
 #         FILE:  dbsg
 #        USAGE:  dbsg [option]
-#  DESCRIPTION:  Create a desktop background slideshow for systems running
+#  DESCRIPTION:  Schedule a desktop background slideshow for systems running
 #                GNOME 3.
 #      OPTIONS:  see function ’usage’ below
 # REQUIREMENTS:  GNOME 3, cron
-#       AUTHOR:  Mauro Fruet, maurofruet@gmail.com
-#      VERSION:  1.0
+#       AUTHOR:  Mauro Fruet <maurofruet@gmail.com>
+#      VERSION:  1.0.1
 #      CREATED:  Apr 06, 2012
-#     REVISION:  Apr 08, 2012
+#     REVISION:  Apr 09, 2012
 #
 #=============================================================================
 
@@ -57,7 +57,8 @@ check_permission() {
         if [ ! -f "$HOME/.xprofile" ]; then
             echo "$cmd" > "$dest"
         else
-            permitted=$(more $dest | grep XAUTHORITY | wc -l)
+            cmd='\[ "$XAUTHORITY" \] && cp -f "$XAUTHORITY" ~/.Xauthority'
+            permitted=$(more "$dest" | grep "$cmd" | wc -l)
             if [ "$permitted" -eq 0 ]; then
                 echo "$cmd" >> "$dest"
             fi
@@ -309,11 +310,9 @@ change_wallpaper() {
     new="file://$image"
     gsettings set org.gnome.desktop.background picture-uri "$new"
     current=$(get_current_wallpaper)
-    timestamp=$(date "+%Y-%M-%d, %H:%M")
-    if [ "$image" = "$current" ]; then
-        echo "$timestamp - New wallpaper: $current" >> "$LOG"
-    else
+    if [ "$image" != "$current" ]; then
         # This should never happen
+        timestamp=$(date "+%Y-%M-%d, %H:%M")
         echo "$timestamp - Wallpaper not changed! Some error occurred" \
                 >> "$LOG"
         exit 3
