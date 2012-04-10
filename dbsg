@@ -10,7 +10,7 @@
 #       AUTHOR:  Mauro Fruet <maurofruet@gmail.com>
 #      VERSION:  1.0.1
 #      CREATED:  Apr 06, 2012
-#     REVISION:  Apr 09, 2012
+#     REVISION:  Apr 10, 2012
 #
 #=============================================================================
 
@@ -25,6 +25,111 @@ if [ -f "$CONF" ]; then
 else
     declare -a folders
 fi
+
+#=== FUNCTION ================================================================
+#        NAME: add_folders
+# DESCRIPTION: Add folders to be monitored.
+#=============================================================================
+add_folders() {
+    check_configuration_folder
+    check_permission
+    check_schedule
+    if [ -f "$CONF" ]; then
+        rm "$CONF"
+        print_folders
+    fi
+    echo -e "\nPlease Enter the full path of the image folders that you want"
+    echo "to set as your desktop background. Please leave an empty line and"
+    echo "press <Enter> when you have finished."
+
+    #-------------------------------------------------------------------------
+    # Let the user interactively add folders to be monitored by specifying
+    # their full paths. Check that the user adds at least one folder and that
+    # added paths correspond to existing folders. Terminate addition of new
+    # folders by leaving an empty line and pressing <Enter>.
+    #-------------------------------------------------------------------------
+    declare -i i=${#folders[@]}
+    while true; do
+        echo -e -n "\nFolder #$((i+1)): "
+        read folders["$i"]
+        if [ -z ${folders[$i]} ]; then
+            break
+        elif [ -z ${folders[0]} ]; then
+            echo -e "\nPlease enter at least one folder."
+            i=i-1
+        elif [ ! -d ${folders[$i]} ]; then
+            echo "This folder does not exist. Please enter a valid one."
+            i=i-1
+        fi
+        i=i+1
+    done
+
+    #-------------------------------------------------------------------------
+    # Print the list of currently monitored folders and update it in the
+    # configuration file. Then, update the wallpaper list and change the
+    # current desktop background.
+    #-------------------------------------------------------------------------
+    print_folders
+    echo "folders=(${folders[@]})" > "$CONF"
+    update_wallpapers
+    change_wallpaper
+}
+
+#=== FUNCTION ================================================================
+#        NAME: change_wallpaper
+# DESCRIPTION: Change the current desktop background.
+#=============================================================================
+change_wallpaper() {
+    check_permission
+    check_folders
+    update_wallpapers
+
+    #-------------------------------------------------------------------------
+    # Select a random line in the wallpaper list and set the corresponding
+    # file as the new desktop background.
+    #-------------------------------------------------------------------------
+    lines=$(cat $WALLPAPERS | wc -l)
+    line=$(( $RANDOM % $lines + 1 ))
+    image=$(head -$line $WALLPAPERS | tail -1)
+    check_wallpaper "$image"
+    new="file://$image"
+    gsettings set org.gnome.desktop.background picture-uri "$new"
+    current=$(get_current_wallpaper)
+    if [ "$image" != "$current" ]; then
+        # This should never happen
+        timestamp=$(date "+%Y-%m-%d, %H:%M")
+        echo "$timestamp - Wallpaper not changed! Some error occurred" \
+                >> "$LOG"
+        exit 3
+    fi
+}
+
+#=== FUNCTION ================================================================
+#        NAME: check_configuration_folder
+# DESCRIPTION: Check if the configuration folder does exist.
+#=============================================================================
+check_configuration_folder() {
+    if [ ! -d "$HOME/.$PROGRAM" ]; then
+        mkdir -p "$HOME/.$PROGRAM"
+    fi
+}
+
+#=== FUNCTION ================================================================
+#        NAME: check_folders
+# DESCRIPTION: Check if all monitored folders do exist.
+#=============================================================================
+check_folders() {
+    declare -i i=0
+    while [ "${folders[$i]}" != "" ]; do
+        if [ ! -d "${folders[$i]}" ]; then
+            timestamp=$(date "+%Y-%m-%d, %H:%M")
+            echo "$timestamp - Folder ${folders[$i]} does not exist!" \
+                >> "$LOG"
+            exit 2
+        fi
+        i=i+1
+    done
+}
 
 #=== FUNCTION ================================================================
 #        NAME: check_permission
@@ -67,30 +172,6 @@ check_permission() {
 }
 
 #=== FUNCTION ================================================================
-#        NAME: check_configuration_folder
-# DESCRIPTION: Check if the configuration folder does exist.
-#=============================================================================
-check_configuration_folder() {
-    if [ ! -d "$HOME/.$PROGRAM" ]; then
-        mkdir -p "$HOME/.$PROGRAM"
-    fi
-}
-
-#=== FUNCTION ================================================================
-#        NAME: update_slideshow
-# DESCRIPTION: Use crontab to schedule the wallpaper slideshow by first
-#              backing up the current crontab file if present.
-#=============================================================================
-update_slideshow() {
-    tmp="/tmp/crontab.tmp"
-    if [ -f "/var/spool/cron/$USER" ]; then
-        crontab -l | grep -Ev "$PROGRAM" > "$tmp"
-    fi
-    echo "*/$MINUTES * * * * $PROGRAM -c" >> "$tmp"
-    crontab "$tmp"
-}
-
-#=== FUNCTION ================================================================
 #        NAME: check_schedule
 # DESCRIPTION: Check if the wallpaper slideshow has been scheduled.
 #=============================================================================
@@ -102,6 +183,62 @@ check_schedule() {
     if [ "$scheduled" -eq 0 ]; then
         update_slideshow
     fi
+}
+
+#=== FUNCTION ================================================================
+#        NAME: check_wallpapers
+# DESCRIPTION: Check if the wallpaper has been deleted.
+#=============================================================================
+check_wallpaper() {
+    if [ ! -f "$1" ]; then
+        timestamp=$(date "+%Y-%m-%d, %H:%M")
+        echo "$timestamp - File $1 has been deleted!" >> "$LOG"
+        update_wallpapers
+    fi
+}
+
+#=== FUNCTION ================================================================
+#        NAME: delete_current_wallpaper
+# DESCRIPTION: Delete the image of the current desktop background.
+#=============================================================================
+delete_current_wallpaper() {
+    #-------------------------------------------------------------------------
+    # Remove the image corresponding to the current desktop background if it
+    # has not been already manually deleted by the user. Then, change the
+    # current desktop background.
+    #-------------------------------------------------------------------------
+    current=$(get_current_wallpaper)
+    if [ ! -f "$current" ]; then
+        echo "Error: the file does not exist."
+        exit 4
+    else
+        rm "$current"
+        echo "File successfully removed."
+        timestamp=$(date "+%Y-%m-%d, %H:%M")
+        echo "$timestamp - Wallpaper removed: $current" >> "$LOG"
+    fi
+    change_wallpaper
+}
+
+#=== FUNCTION ================================================================
+#        NAME: get_current_wallpaper
+# DESCRIPTION: Return the current desktop background.
+#=============================================================================
+get_current_wallpaper() {
+    echo $(/usr/bin/gsettings get org.gnome.desktop.background picture-uri |
+            sed "s/'//g" | sed 's/file:\/\///')
+}
+
+#=== FUNCTION ================================================================
+#        NAME: number_of_wallpapers
+# DESCRIPTION: Show the number of currently monitored wallpapers.
+#=============================================================================
+number_of_wallpapers() {
+    n=0
+    if [ -f $WALLPAPERS ]; then
+        n=$(more $WALLPAPERS | wc -l)
+    fi
+    echo -e "\n$PROGRAM is currently monitoring $n wallpapers.\n"
 }
 
 #=== FUNCTION ================================================================
@@ -117,55 +254,6 @@ print_folders() {
     for folder in "${folders[@]}"; do
         echo "$folder"
     done
-}
-
-#=== FUNCTION ================================================================
-#        NAME: add_folders
-# DESCRIPTION: Add folders to be monitored.
-#=============================================================================
-add_folders() {
-    check_configuration_folder
-    check_permission
-    check_schedule
-    if [ -f "$CONF" ]; then
-        rm "$CONF"
-        print_folders
-    fi
-    echo -e "\nPlease Enter the full path of the image folders that you want"
-    echo "to set as your desktop background. Please leave an empty line and"
-    echo "press <Enter> when you have finished."
-    
-    #-------------------------------------------------------------------------
-    # Let the user interactively add folders to be monitored by specifying
-    # their full paths. Check that the user adds at least one folder and that
-    # added paths correspond to existing folders. Terminate addition of new
-    # folders by leaving an empty line and pressing <Enter>.
-    #-------------------------------------------------------------------------
-    declare -i i=${#folders[@]}
-    while true; do
-        echo -e -n "\nFolder #$((i+1)): "
-        read folders["$i"]
-        if [ -z ${folders[$i]} ]; then
-            break   
-        elif [ -z ${folders[0]} ]; then
-            echo -e "\nPlease enter at least one folder."
-            i=i-1
-        elif [ ! -d ${folders[$i]} ]; then
-            echo "This folder does not exist. Please enter a valid one."
-            i=i-1
-        fi
-        i=i+1
-    done
-
-    #-------------------------------------------------------------------------
-    # Print the list of currently monitored folders and update it in the
-    # configuration file. Then, update the wallpaper list and change the
-    # current desktop background.
-    #-------------------------------------------------------------------------
-    print_folders
-    echo "folders=(${folders[@]})" > "$CONF"
-    update_wallpapers
-    change_wallpaper
 }
 
 #=== FUNCTION ================================================================
@@ -220,32 +308,17 @@ remove_folders() {
 }
 
 #=== FUNCTION ================================================================
-#        NAME: check_folders
-# DESCRIPTION: Check if all monitored folders do exist.
+#        NAME: update_slideshow
+# DESCRIPTION: Use crontab to schedule the wallpaper slideshow by first
+#              backing up the current crontab file if present.
 #=============================================================================
-check_folders() {
-    declare -i i=0
-    while [ "${folders[$i]}" != "" ]; do
-        if [ ! -d "${folders[$i]}" ]; then
-            timestamp=$(date "+%Y-%m-%d, %H:%M")
-            echo "$timestamp - Folder ${folders[$i]} does not exist!" \
-                >> "$LOG"
-            exit 2
-        fi
-        i=i+1
-    done
-}
-
-#=== FUNCTION ================================================================
-#        NAME: check_wallpapers
-# DESCRIPTION: Check if the wallpaper has been deleted.
-#=============================================================================
-check_wallpaper() {
-    if [ ! -f "$1" ]; then
-        timestamp=$(date "+%Y-%m-%d, %H:%M")
-        echo "$timestamp - File $1 has been deleted!" >> "$LOG"
-        update_wallpapers
+update_slideshow() {
+    tmp="/tmp/crontab.tmp"
+    if [ -f "/var/spool/cron/$USER" ]; then
+        crontab -l | grep -Ev "$PROGRAM" > "$tmp"
     fi
+    echo "*/$MINUTES * * * * $PROGRAM -c" >> "$tmp"
+    crontab "$tmp"
 }
 
 #=== FUNCTION ================================================================
@@ -279,79 +352,6 @@ update_wallpapers() {
         done
         i=i+1
     done
-}
-
-#=== FUNCTION ================================================================
-#        NAME: get_current_wallpaper
-# DESCRIPTION: Return the current desktop background.
-#=============================================================================
-get_current_wallpaper() {
-    echo $(/usr/bin/gsettings get org.gnome.desktop.background picture-uri | 
-            sed "s/'//g" | sed 's/file:\/\///')
-}
-
-#=== FUNCTION ================================================================
-#        NAME: change_wallpaper
-# DESCRIPTION: Change the current desktop background.
-#=============================================================================
-change_wallpaper() {
-    check_permission
-    check_folders
-    update_wallpapers
-
-    #-------------------------------------------------------------------------
-    # Select a random line in the wallpaper list and set the corresponding
-    # file as the new desktop background.
-    #-------------------------------------------------------------------------
-    lines=$(cat $WALLPAPERS | wc -l)
-    line=$(( $RANDOM % $lines + 1 ))
-    image=$(head -$line $WALLPAPERS | tail -1)
-    check_wallpaper "$image"
-    new="file://$image"
-    gsettings set org.gnome.desktop.background picture-uri "$new"
-    current=$(get_current_wallpaper)
-    if [ "$image" != "$current" ]; then
-        # This should never happen
-        timestamp=$(date "+%Y-%m-%d, %H:%M")
-        echo "$timestamp - Wallpaper not changed! Some error occurred" \
-                >> "$LOG"
-        exit 3
-    fi
-}
-
-#=== FUNCTION ================================================================
-#        NAME: delete_current_wallpaper
-# DESCRIPTION: Delete the image of the current desktop background.
-#=============================================================================
-delete_current_wallpaper() {
-    #-------------------------------------------------------------------------
-    # Remove the image corresponding to the current desktop background if it
-    # has not been already manually deleted by the user. Then, change the
-    # current desktop background.
-    #-------------------------------------------------------------------------
-    current=$(get_current_wallpaper)
-    if [ ! -f "$current" ]; then
-        echo "Error: the file does not exist."
-        exit 4
-    else
-        rm "$current"
-        echo "File successfully removed."
-        timestamp=$(date "+%Y-%m-%d, %H:%M")
-        echo "$timestamp - Wallpaper removed: $current" >> "$LOG"
-    fi
-    change_wallpaper
-}
-
-#=== FUNCTION ================================================================
-#        NAME: number_of_wallpapers
-# DESCRIPTION: Show the number of currently monitored wallpapers.
-#=============================================================================
-number_of_wallpapers() {
-    n=0
-    if [ -f $WALLPAPERS ]; then
-        n=$(more $WALLPAPERS | wc -l)
-    fi
-    echo -e "\n$PROGRAM is currently monitoring $n wallpapers.\n"
 }
 
 #=== FUNCTION ================================================================
