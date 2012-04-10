@@ -34,7 +34,6 @@ fi
 add_folders() {
     check_configuration_folder
     check_permission
-    update_slideshow schedule
     if [ -f "$CONF" ]; then
         rm "$CONF"
         print_folders
@@ -64,6 +63,21 @@ add_folders() {
         fi
         i=i+1
     done
+
+    if [ $(check_schedule) = false ]; then
+        while true; do
+            echo -n "Do you want to schedule the slideshow? (y/n) "
+            read answer
+            if [ $answer = "y" ]; then
+                update_slideshow schedule
+                break
+            elif [ $answer = "n" ]; then
+                break
+            else
+                echo "Please answer 'y' or 'n'."
+            fi
+        done
+    fi
 
     #-------------------------------------------------------------------------
     # Print the list of currently monitored folders and update it in the
@@ -141,7 +155,7 @@ check_permission() {
     #-------------------------------------------------------------------------
     # Check if the system is using GNOME 3 as desktop environment.
     #-------------------------------------------------------------------------
-    xpid=$(pidof gnome-shell)
+    xpid=$(pidof gnome-session)
     if [ -z "$xpid" ]; then
         echo "Sorry, this program is designed to work only in GNOME 3."
         exit 5
