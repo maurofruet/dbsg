@@ -20,8 +20,8 @@ dbsg lets you:
 it is stored
 * change the current desktop background by randomly selecting one
 in the image folders monitored by the program
+* schedule the desktop background slideshow
 * unschedule the desktop background slideshow
-* reschedule the desktop background slideshow
 
 ## Installation
 
