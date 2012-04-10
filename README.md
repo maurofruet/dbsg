@@ -11,8 +11,6 @@ files that are stored in the folders that you have specified.
 
 dbsg lets you:
 
-* change the current desktop background by randomly selecting one
-in the image folders monitored by the program
 * add image folders to be monitored
 * stop monitoring specific folders
 * print the list of folders that are currently monitored
@@ -20,6 +18,10 @@ in the image folders monitored by the program
 * show the full path of the current desktop background
 * delete the current desktop background from the folder in which
 it is stored
+* change the current desktop background by randomly selecting one
+in the image folders monitored by the program
+* unschedule the desktop background slideshow
+* reschedule the desktop background slideshow
 
 ## Installation
 

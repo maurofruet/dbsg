@@ -8,7 +8,7 @@
 #      OPTIONS:  see function ’usage’ below
 # REQUIREMENTS:  GNOME 3, cron
 #       AUTHOR:  Mauro Fruet <maurofruet@gmail.com>
-#      VERSION:  1.0.1
+#      VERSION:  1.1
 #      CREATED:  Apr 06, 2012
 #     REVISION:  Apr 10, 2012
 #
@@ -19,6 +19,7 @@ CONF="$HOME/.$PROGRAM/$PROGRAM.conf"         # configuration file
 WALLPAPERS="$HOME/.$PROGRAM/wallpapers.txt"  # wallpaper list
 MINUTES=30                                   # time between backgrounds
 LOG="$HOME/.$PROGRAM/$PROGRAM.log"           # log file
+VERSION="1.1"                                # version of the program
 
 if [ -f "$CONF" ]; then
     . "$CONF"
@@ -33,7 +34,7 @@ fi
 add_folders() {
     check_configuration_folder
     check_permission
-    check_schedule
+    update_slideshow schedule
     if [ -f "$CONF" ]; then
         rm "$CONF"
         print_folders
@@ -153,6 +154,7 @@ check_permission() {
                 < "/proc/$xpid/environ")
     export DISPLAY="$xdisp"
 
+
     #-------------------------------------------------------------------------
     # Check if the file .Xauthority is present in the home folder of the user.
     #-------------------------------------------------------------------------
@@ -181,13 +183,16 @@ check_schedule() {
         scheduled=$(crontab -l | grep "dbsg -c" | wc -l)
     fi
     if [ "$scheduled" -eq 0 ]; then
-        update_slideshow
+        echo false
+    else
+        echo true
     fi
 }
 
 #=== FUNCTION ================================================================
 #        NAME: check_wallpapers
 # DESCRIPTION: Check if the wallpaper has been deleted.
+# PARAMETER 1: Image to check
 #=============================================================================
 check_wallpaper() {
     if [ ! -f "$1" ]; then
@@ -225,7 +230,7 @@ delete_current_wallpaper() {
 # DESCRIPTION: Return the current desktop background.
 #=============================================================================
 get_current_wallpaper() {
-    echo $(/usr/bin/gsettings get org.gnome.desktop.background picture-uri |
+    echo $(gsettings get org.gnome.desktop.background picture-uri |
             sed "s/'//g" | sed 's/file:\/\///')
 }
 
@@ -309,16 +314,30 @@ remove_folders() {
 
 #=== FUNCTION ================================================================
 #        NAME: update_slideshow
-# DESCRIPTION: Use crontab to schedule the wallpaper slideshow by first
-#              backing up the current crontab file if present.
+# DESCRIPTION: Use crontab to schedule or unschedule the wallpaper slideshow
+#              by first backing up the current crontab file if present.
+# PARAMETER 1: 'schedule' to schedule the slideshow or 'unschedule' to
+#              unschedule it.
 #=============================================================================
 update_slideshow() {
     tmp="/tmp/crontab.tmp"
     if [ -f "/var/spool/cron/$USER" ]; then
-        crontab -l | grep -Ev "$PROGRAM" > "$tmp"
+        crontab -l | grep -v "$PROGRAM -c" > "$tmp"
     fi
-    echo "*/$MINUTES * * * * $PROGRAM -c" >> "$tmp"
+    if [ "$1" = "schedule" ]; then
+        if [ $(check_schedule) = true ]; then
+            echo "dbsg is already scheduled."
+        fi
+        echo "*/$MINUTES * * * * $PROGRAM -c" >> "$tmp"
+    elif [ "$1" = "unschedule" ]; then
+        if [ $(check_schedule) = false ]; then
+            echo "dbsg is not currently scheduled."
+        fi
+    else
+        echo "Usage error of update_slideshow."
+    fi
     crontab "$tmp"
+    rm "$tmp"
 }
 
 #=== FUNCTION ================================================================
@@ -364,12 +383,23 @@ usage() {
     echo "     -a  add folders to be monitored"
     echo "     -c  change current desktop background"
     echo "     -d  delete file of current desktop background"
+    echo "     -g  get and show path of current desktop background"
     echo "     -n  show number of monitored wallpapers"
     echo "     -p  print list of monitored folders"
     echo "     -r  stop monitoring specific folders"
-    echo "     -s  show path of current desktop background"
+    echo "     -s  schedule the slideshow"
+    echo "     -u  unschedule the slideshow"
+    echo "     -v  show the version of the program"
     echo " --help  show usage"
     echo -e "\nSee the man page for more details.\n"
+}
+
+#=== FUNCTION ================================================================
+#        NAME: show_version
+# DESCRIPTION: Show the version of the program
+#=============================================================================
+show_version() {
+    echo "The version of $PROGRAM installed on your system is $VERSION"
 }
 
 if [ -n "$2" ]; then
@@ -381,10 +411,13 @@ case "$1" in
     -a) add_folders;;
     -c) change_wallpaper;;
     -d) delete_current_wallpaper;;
+    -g) get_current_wallpaper;;
     -n) number_of_wallpapers;;
     -p) print_folders;;
     -r) remove_folders;;
-    -s) get_current_wallpaper;;
+    -s) update_slideshow schedule;;
+    -u) update_slideshow unschedule;;
+    -v) show_version;;
     --help) usage;;
     *) usage; exit 1
 esac

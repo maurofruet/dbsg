@@ -1,4 +1,4 @@
-.TH DBSG 1 "Apr 9, 2012" "dbsg 1.0.1"
+.TH DBSG 1 "Apr 10, 2012" "dbsg 1.1"
 
 .SH NAME
 dbsg \- schedule a desktop background slideshow in GNOME 3
@@ -36,6 +36,10 @@ delete the current desktop background from the folder in which it is
 stored and set another wallpaper as the new desktop background.
 
 .TP
+.B -g
+get and show the full path of the current desktop background
+.TP
+
 .B -n
 show the number of wallpapers monitored by the program
 
@@ -49,11 +53,20 @@ stop monitoring specific folders
 
 .TP
 .B -s
-show the full path of the current desktop background
+schedule the desktop background slideshow
+
+
+.TP
+.B -u
+unschedule the desktop background slideshow
+
+.TP
+.B -v
+show the version of the program
 
 .TP
 .B --help
-show the list of parameters accepted by the program.
+show the list of parameters accepted by the program
 
 .SH USAGE
 In order to periodically change the desktop background, the user has
@@ -69,7 +82,8 @@ the following command:
 .PP
 which asks the user to add at least one image folder. Then,
 .B dbsg
-schedules the wallpaper slideshow and changes the current background.
+automatically schedules the wallpaper slideshow and changes the
+current background.
 
 .SH EXIT STATUS
 .TP
