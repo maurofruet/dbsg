@@ -281,8 +281,10 @@ remove_folders() {
         else
             declare -i j=0      
             monitored=false
-            while [ "$j" -lt "${#folders[@]}" ]; do
+            dim="${#folders[@]}"
+            while [ "$j" -lt "$dim" ]; do
                 if [ "${folders[$j]}" = "$removed_folder" ]; then
+                    folders=(${folders[@]:0:$j} ${folders[@]:$j+1:$dim-$j})
                     monitored=true
                     break
                 fi
@@ -290,8 +292,6 @@ remove_folders() {
             done
             if [ "$monitored" = false ]; then
                 echo "This folder is not currently monitored."
-            else
-                unset folders["$j"]
             fi
         fi
 	done
