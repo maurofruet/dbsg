@@ -49,10 +49,9 @@ This can be achieved by issuing the following command:
 
     $ dbsg -a
 
-which asks you to add at least one image folder.
-dbsg currently supports the following extensions: .jpg, .bmp,
-png, tif and gif. Then, the program schedules the wallpaper
-slideshow and changes the current background.	
+which asks you to add at least one image folder. Then, the
+program asks you if you want to schedule the wallpaper slideshow
+and changes the current background.
 
 You can get a list of all the parameters accepted by the
 program by executing the following command:
@@ -60,6 +59,9 @@ program by executing the following command:
     $ dbsg --help
 
 or read the man page of the program for more details.
+
+dbsg currently supports the following extensions: .jpg, .bmp,
+png, tif and gif.
 
 ## Contributing
 

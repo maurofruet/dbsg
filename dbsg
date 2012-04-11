@@ -421,17 +421,17 @@ update_wallpapers() {
 usage() {
     echo -e "\nusage: $PROGRAM option"
     echo -e "\nPossible options are:"
-    echo "     -a  add folders to be monitored"
-    echo "     -c  change current desktop background"
-    echo "     -d  delete file of current desktop background"
-    echo "     -g  get and show path of current desktop background"
-    echo "     -n  show number of monitored wallpapers"
-    echo "     -p  print list of monitored folders"
-    echo "     -r  stop monitoring specific folders"
-    echo "     -s  schedule the slideshow"
-    echo "     -u  unschedule the slideshow"
-    echo "     -v  show the version of the program"
-    echo " --help  show usage"
+    echo "       -a  add folders to be monitored"
+    echo "       -c  change current desktop background"
+    echo "       -d  delete file of current desktop background"
+    echo "       -g  get and show path of current desktop background"
+    echo "       -n  show number of monitored wallpapers"
+    echo "       -p  print list of monitored folders"
+    echo "       -r  stop monitoring specific folders"
+    echo "       -s  schedule the slideshow"
+    echo "       -u  unschedule the slideshow"
+    echo "   --help  show usage"
+    echo "--version  show the version of the program"
     echo -e "\nSee the man page for more details.\n"
 }
 
@@ -458,7 +458,7 @@ case "$1" in
     -r) remove_folders;;
     -s) update_slideshow schedule;;
     -u) update_slideshow unschedule;;
-    -v) show_version;;
+    --version) show_version;;
     --help) usage;;
     *) usage; exit 1
 esac
