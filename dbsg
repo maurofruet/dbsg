@@ -34,10 +34,7 @@ fi
 add_folders() {
     check_configuration_folder
     check_permission
-    if [ -f "$CONF" ]; then
-        rm "$CONF"
-        print_folders
-    fi
+    print_folders
     echo -e "\nPlease Enter the full path of the image folders that you want"
     echo "to set as your desktop background. Please leave an empty line and"
     echo "press <Enter> when you have finished."
