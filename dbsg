@@ -8,9 +8,9 @@
 #      OPTIONS:  see function ’usage’ below
 # REQUIREMENTS:  GNOME 3, cron
 #       AUTHOR:  Mauro Fruet <maurofruet@gmail.com>
-#      VERSION:  1.1
+#      VERSION:  1.2
 #      CREATED:  Apr 06, 2012
-#     REVISION:  Apr 10, 2012
+#     REVISION:  Apr 12, 2012
 #
 #=============================================================================
 
@@ -19,7 +19,7 @@ CONF="$HOME/.$PROGRAM/$PROGRAM.conf"         # configuration file
 WALLPAPERS="$HOME/.$PROGRAM/wallpapers.txt"  # wallpaper list
 MINUTES=30                                   # time between backgrounds
 LOG="$HOME/.$PROGRAM/$PROGRAM.log"           # log file
-VERSION="1.1"                                # version of the program
+VERSION="1.2"                                # version of the program
 
 if [ -f "$CONF" ]; then
     . "$CONF"
@@ -347,6 +347,14 @@ remove_folders() {
 }
 
 #=== FUNCTION ================================================================
+#        NAME: show_log
+# DESCRIPTION: Show the log of the program.
+#=============================================================================
+show_log() {
+    cat "$LOG"
+}
+ 
+#=== FUNCTION ================================================================
 #        NAME: update_slideshow
 # DESCRIPTION: Use crontab to schedule or unschedule the wallpaper slideshow
 #              by first backing up the current crontab file if present.
@@ -427,8 +435,9 @@ usage() {
     echo "       -r  stop monitoring specific folders"
     echo "       -s  schedule the slideshow"
     echo "       -u  unschedule the slideshow"
-    echo "   --help  show usage"
+    echo "    --log  show the log"
     echo "--version  show the version of the program"
+    echo "   --help  show usage"
     echo -e "\nSee the man page for more details.\n"
 }
 
@@ -455,6 +464,7 @@ case "$1" in
     -r) remove_folders;;
     -s) update_slideshow schedule;;
     -u) update_slideshow unschedule;;
+    --log) show_log;;
     --version) show_version;;
     --help) usage;;
     *) usage; exit 1
