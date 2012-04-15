@@ -200,7 +200,7 @@ check_permission() {
 #=============================================================================
 check_schedule() {
     scheduled=0
-    if [ -f "/usr/bin/crontab" ]; then
+    if [ -f "/var/spool/cron/$USER" ]; then
         scheduled=$(crontab -l | grep "dbsg -c" | wc -l)
     fi
     if [ "$scheduled" -eq 0 ]; then
