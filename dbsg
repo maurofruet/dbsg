@@ -9,6 +9,7 @@
 # REQUIREMENTS:  GNOME 3, cron
 #       AUTHOR:  Mauro Fruet <maurofruet@gmail.com>
 #      VERSION:  1.2
+#      LICENSE:  GPL3
 #      CREATED:  Apr 06, 2012
 #     REVISION:  Apr 12, 2012
 #
@@ -446,7 +447,8 @@ usage() {
 # DESCRIPTION: Show the version of the program
 #=============================================================================
 show_version() {
-    echo "The version of $PROGRAM installed on your system is $VERSION"
+    echo "$PROGRAM $VERSION"
+    echo "Copyright (C) 2012 Mauro Fruet"
 }
 
 if [ -n "$2" ]; then
