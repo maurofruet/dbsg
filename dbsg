@@ -186,8 +186,8 @@ check_permission() {
         if [ ! -f "$HOME/.xprofile" ]; then
             echo "$cmd" > "$dest"
         else
-            cmd='\[ "$XAUTHORITY" \] && cp -f "$XAUTHORITY" ~/.Xauthority'
-            permitted=$(more "$dest" | grep "$cmd" | wc -l)
+            cmd1='\[ "$XAUTHORITY" \] && cp -f "$XAUTHORITY" ~/.Xauthority'
+            permitted=$(more "$dest" | grep "$cmd1" | wc -l)
             if [ "$permitted" -eq 0 ]; then
                 echo "$cmd" >> "$dest"
             fi
