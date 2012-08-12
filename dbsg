@@ -163,7 +163,9 @@ check_permission() {
     #-------------------------------------------------------------------------
     # Check if the system is using GNOME 3 as desktop environment.
     #-------------------------------------------------------------------------
-    xpid=$(pidof gnome-session)
+    get_pid="pidof"
+    command -v "$get_pid" > /dev/null 2>&1 || get_pid="pgrep"
+    xpid=$($get_pid gnome-session)
     if [ -z "$xpid" ]; then
         echo "Sorry, this program is designed to work only in GNOME 3."
         exit 5
