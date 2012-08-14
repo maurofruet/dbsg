@@ -263,6 +263,30 @@ delete_current_wallpaper() {
 }
 
 #=== FUNCTION ================================================================
+#        NAME: fix
+# DESCRIPTION: Temporary fix for nautilus bug
+#=============================================================================
+fix() {
+    if [ "$1" = "config" ]; then
+        AUTOSTART="$HOME/.config/autostart/$PROGRAM.desktop"
+        echo "[Desktop Entry]" > $AUTOSTART
+        echo "Type=Application" >> $AUTOSTART
+        echo "Exec=/usr/bin/dbsg --change" >> $AUTOSTART
+        echo "Hidden=false" >> $AUTOSTART
+        echo "X-GNOME-Autostart-enabled=true" >> $AUTOSTART
+        echo "Name[en_US]=dbsg" >> $AUTOSTART
+        echo "Name=dbsg" >> $AUTOSTART
+        echo "dbsg has been scheduled. Changes will take effect at the next GNOME login"
+    elif [ "$1" = "change" ]; then
+        seconds=$(echo $(($MINUTES * 60)))
+        while true;do
+            sleep $seconds
+            change_wallpaper
+        done
+    fi
+}
+
+#=== FUNCTION ================================================================
 #        NAME: get_current_wallpaper
 # DESCRIPTION: Return the current desktop background.
 #=============================================================================
@@ -432,6 +456,7 @@ usage() {
     echo "       -a  add folders to be monitored"
     echo "       -c  change current desktop background"
     echo "       -d  delete file of current desktop background"
+    echo "       -f  schedule the slideshow without cron"
     echo "       -g  get and show path of current desktop background"
     echo "       -n  show number of monitored wallpapers"
     echo "       -p  print list of monitored folders"
@@ -461,7 +486,9 @@ fi
 case "$1" in
     -a) add_folders;;
     -c) change_wallpaper;;
+    --change) fix change;;
     -d) delete_current_wallpaper;;
+    -f) fix config;;
     -g) get_current_wallpaper;;
     -n) number_of_wallpapers;;
     -p) print_folders;;
