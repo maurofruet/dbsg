@@ -8,10 +8,10 @@
 #      OPTIONS:  see function ’usage’ below
 # REQUIREMENTS:  GNOME 3, cron
 #       AUTHOR:  Mauro Fruet <maurofruet@gmail.com>
-#      VERSION:  1.2
+#      VERSION:  1.2.1
 #      LICENSE:  GPL3
 #      CREATED:  Apr 06, 2012
-#     REVISION:  Apr 12, 2012
+#     REVISION:  Oct 28, 2012
 #
 #=============================================================================
 
@@ -20,7 +20,8 @@ CONF="$HOME/.$PROGRAM/$PROGRAM.conf"         # configuration file
 WALLPAPERS="$HOME/.$PROGRAM/wallpapers.txt"  # wallpaper list
 MINUTES=30                                   # time between backgrounds
 LOG="$HOME/.$PROGRAM/$PROGRAM.log"           # log file
-VERSION="1.2"                                # version of the program
+DBUS_SESSION=$HOME/.dbus-session             # dbus session
+VERSION="1.2.1"                                # version of the program
 
 if [ -f "$CONF" ]; then
     . "$CONF"
@@ -99,6 +100,24 @@ add_folders() {
 }
 
 #=== FUNCTION ================================================================
+#        NAME: autostart_dbus
+# DESCRIPTION: Export DBUS_SESSION_BUS_ADDRESS at startup to a file readable
+#              for cron
+#=============================================================================
+autostart_dbus() {
+    AUTOSTART="$HOME/.config/autostart/$PROGRAM.desktop"
+    if [ ! -f $AUTOSTART ];then
+        echo "[Desktop Entry]" > $AUTOSTART
+        echo "Type=Application" >> $AUTOSTART
+        echo "Exec=/usr/bin/$PROGRAM -e" >> $AUTOSTART
+        echo "Hidden=false" >> $AUTOSTART
+        echo "X-GNOME-Autostart-enabled=true" >> $AUTOSTART
+        echo "Name[en_US]=$PROGRAM" >> $AUTOSTART
+        echo "Name=$PROGRAM" >> $AUTOSTART
+    fi
+}
+
+#=== FUNCTION ================================================================
 #        NAME: change_wallpaper
 # DESCRIPTION: Change the current desktop background.
 #=============================================================================
@@ -106,6 +125,7 @@ change_wallpaper() {
     check_permission
     check_folders
     update_wallpapers
+    autostart_dbus
 
     #-------------------------------------------------------------------------
     # Select a random line in the wallpaper list and set the corresponding
@@ -116,15 +136,10 @@ change_wallpaper() {
     image=$(head -$line $WALLPAPERS | tail -1)
     check_wallpaper "$image"
     new="file://$image"
-    gsettings set org.gnome.desktop.background picture-uri "$new"
-    current=$(get_current_wallpaper)
-    if [ "$image" != "$current" ]; then
-        # This should never happen
-        timestamp=$(date "+%Y-%m-%d, %H:%M")
-        echo "$timestamp - Wallpaper not changed! Some error occurred" \
-                >> "$LOG"
-        exit 3
+    if [ -f $DBUS_SESSION ];then
+        export DBUS_SESSION_BUS_ADDRESS=$(less $DBUS_SESSION)
     fi
+    gsettings set org.gnome.desktop.background picture-uri "$new"
 }
 
 #=== FUNCTION ================================================================
@@ -263,27 +278,11 @@ delete_current_wallpaper() {
 }
 
 #=== FUNCTION ================================================================
-#        NAME: fix
-# DESCRIPTION: Temporary fix for nautilus bug
+#        NAME: export_dbus
+# DESCRIPTION: Export DBUS_SESSION_BUS_ADDRESS
 #=============================================================================
-fix() {
-    if [ "$1" = "config" ]; then
-        AUTOSTART="$HOME/.config/autostart/$PROGRAM.desktop"
-        echo "[Desktop Entry]" > $AUTOSTART
-        echo "Type=Application" >> $AUTOSTART
-        echo "Exec=/usr/bin/dbsg --change" >> $AUTOSTART
-        echo "Hidden=false" >> $AUTOSTART
-        echo "X-GNOME-Autostart-enabled=true" >> $AUTOSTART
-        echo "Name[en_US]=dbsg" >> $AUTOSTART
-        echo "Name=dbsg" >> $AUTOSTART
-        echo "dbsg has been scheduled. Changes will take effect at the next GNOME login"
-    elif [ "$1" = "change" ]; then
-        seconds=$(echo $(($MINUTES * 60)))
-        while true;do
-            sleep $seconds
-            change_wallpaper
-        done
-    fi
+export_dbus() {
+    echo $DBUS_SESSION_BUS_ADDRESS > $DBUS_SESSION
 }
 
 #=== FUNCTION ================================================================
@@ -488,6 +487,7 @@ case "$1" in
     -c) change_wallpaper;;
     --change) fix change;;
     -d) delete_current_wallpaper;;
+    -e) export_dbus;;
     -f) fix config;;
     -g) get_current_wallpaper;;
     -n) number_of_wallpapers;;
