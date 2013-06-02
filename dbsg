@@ -455,7 +455,6 @@ usage() {
     echo "       -a  add folders to be monitored"
     echo "       -c  change current desktop background"
     echo "       -d  delete file of current desktop background"
-    echo "       -f  schedule the slideshow without cron"
     echo "       -g  get and show path of current desktop background"
     echo "       -n  show number of monitored wallpapers"
     echo "       -p  print list of monitored folders"
@@ -485,10 +484,8 @@ fi
 case "$1" in
     -a) add_folders;;
     -c) change_wallpaper;;
-    --change) fix change;;
     -d) delete_current_wallpaper;;
     -e) export_dbus;;
-    -f) fix config;;
     -g) get_current_wallpaper;;
     -n) number_of_wallpapers;;
     -p) print_folders;;
